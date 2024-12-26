@@ -45,13 +45,17 @@ export class Formatter {
     private groupByCategory(groups: Groups, articles: Article[], feeds: Feeds) {
         const categories: ArticlesByGroup[] = [];
         for (const categoryId of this.config.categoryIds) {
-        const category = groups[`${categoryId}`];
-        const selectedFeeds = category.feedIds;
-        const selectedArticles = Object.values(articles).filter(article => selectedFeeds.indexOf(article.feedId) >= 0);
-        for (const article of selectedArticles) {
-            article.feedName = feeds[article.feedId].title;
-        }
-        categories.push({ category, articles: selectedArticles });
+            const category = groups[`${categoryId}`];
+            if (!category) {
+                console.warn(`CategoryId ${categoryId} not found`)
+                continue;
+            }
+            const selectedFeeds = category.feedIds;
+            const selectedArticles = Object.values(articles).filter(article => selectedFeeds.indexOf(article.feedId) >= 0);
+            for (const article of selectedArticles) {
+                article.feedName = feeds[article.feedId].title;
+            }
+            categories.push({ category, articles: selectedArticles });
         }
         return categories;
     }
