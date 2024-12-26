@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-import { Article, Feed, FeverClient, Group } from "./FeverClient";
+import { FeverClient } from "./FeverClient";
+import { Formatter } from "./Formatter";
 
 dotenv.config();
 
@@ -17,29 +18,10 @@ const SMTP_PASSWORD = process.env.SMTP_PASSWORD || "";
 const TO_EMAIL = process.env.TO_EMAIL || "";
 const FROM_EMAIL = process.env.FROM_EMAIL || "";
 
-
-interface ArticlesByGroup {
-  category: Group,
-  articles: Article[],
-}
-
-
-function generateEmailContent(articles: ArticlesByGroup[]): string {
-  let htmlContent = "<h1>Daily Paper</h1>";
-  htmlContent += `<p>Date: ${new Date().toISOString().split("T")[0]}</p>`;
-  for (const arts of articles) {
-    if (arts.articles.length > 0) {
-      htmlContent += `<h2>${arts.category.title}</h2>`;
-      for (const article of arts.articles) {
-        const title = `${article.title} (${article.feedName})`;
-        const link = article.url || "#";
-        const snippet = article.excerpt || "No summary available";
-        htmlContent += `<h3><a href="${link}">${title}</a></h3><div>${snippet}</div>`;
-      }
-    }
-  }
-  return htmlContent;
-}
+// Run the script
+runAsync().catch((error) => {
+  console.error("An error occurred:", error);
+});
 
 async function sendEmail(subject: string, content: string): Promise<void> {
   const transporter = nodemailer.createTransport({
@@ -68,8 +50,7 @@ async function sendEmail(subject: string, content: string): Promise<void> {
 }
 
 // Main function
-async function main() {
-  const categories: ArticlesByGroup[] = [];
+async function runAsync() {
 
   const client = new FeverClient({
     url: FRESHRSS_URL,
@@ -83,21 +64,8 @@ async function main() {
   const feeds = await client.fetchFeeds();
   const articles = await client.fetchArticles(since);
   
-  for (const categoryId of CATEGORY_IDS) {
-    const category = groups[`${categoryId}`];
-    const selectedFeeds = category.feedIds;
-    const selectedArticles = Object.values(articles).filter(article => selectedFeeds.indexOf(article.feedId) >= 0);
-    for(const article of selectedArticles) {
-      article.feedName = feeds[article.feedId].title;
-    }
-    categories.push({category, articles: selectedArticles});
-  }
-
-  const emailContent = generateEmailContent(categories);
+  const formatter = new Formatter({categoryIds: CATEGORY_IDS, maxImageWidthPx: 400});
+  const emailContent = formatter.generateEmailContent(groups, feeds, articles);
   await sendEmail("Your Daily Paper", emailContent);
 }
 
-// Run the script
-main().catch((error) => {
-  console.error("An error occurred:", error);
-});
