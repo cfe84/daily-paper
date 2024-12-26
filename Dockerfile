@@ -5,4 +5,4 @@ RUN npm install
 COPY . .
 RUN npm install -g typescript
 RUN tsc
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/dailyPaper.js"]
