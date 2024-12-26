@@ -64,7 +64,7 @@ async function runAsync() {
   const feeds = await client.fetchFeeds();
   const articles = await client.fetchArticles(since);
   
-  const formatter = new Formatter({categoryIds: CATEGORY_IDS, maxImageWidthPx: 400});
+  const formatter = new Formatter({categoryIds: CATEGORY_IDS, maxImageWidthPx: 400, maxExcerptLength: 600});
   const emailContent = formatter.generateEmailContent(groups, feeds, articles);
   await sendEmail("Your Daily Paper", emailContent);
 }

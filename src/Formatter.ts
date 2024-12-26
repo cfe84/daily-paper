@@ -3,6 +3,7 @@ import { Article, ArticlesByGroup, Feeds, Groups } from "./Contracts";
 export interface FormatterConfig {
     categoryIds: number[],
     maxImageWidthPx: number,
+    maxExcerptLength: number,
 }
 
 export class Formatter {
@@ -17,16 +18,35 @@ export class Formatter {
         if (arts.articles.length > 0) {
           htmlContent += `<h1>${arts.category.title}</h1>`;
           for (const article of arts.articles) {
-            const excerpt = this.reformatImg(article.excerpt)
+            const images = [...this.findImages(article.excerpt)];
+            const excerpt = this.findText(article.excerpt);
             const title = `${article.title} (${article.feedName})`;
             const link = article.url || "#";
-            const snippet = excerpt || "No summary available";
+            const snippet = (excerpt && excerpt.length > this.config.maxExcerptLength) ? excerpt.substring(0, this.config.maxExcerptLength) + "[...]" : excerpt;
+            const image = images.length > 0 ? `<div><img src=${images[0]} style="max-width: ${this.config.maxImageWidthPx}px" /></div>` : "";
             htmlContent += `<h2><a href="${link}">${title}</a></h2>
+            ${image}
             <div>${snippet}</div>`;
           }
         }
       }
       return htmlContent;
+    }
+
+    private *findImages(excerpt: string): Iterable<string> {
+        const regexp = new RegExp(/<img[^>]*src="([^"]+)"[^>]*>/ig);
+        let image: RegExpExecArray | null;
+
+        while (image = regexp.exec(excerpt)) {
+            const [_, imageSource] = image;
+            yield imageSource;
+        }
+    }
+
+    private findText(excerpt: string): string {
+        const tagsRegexp = new RegExp(/<[^>]+>/gi);
+        const textWithoutTags = excerpt.replace(tagsRegexp, " ");
+        return textWithoutTags;
     }
 
     private reformatImg(excerpt: string) {
