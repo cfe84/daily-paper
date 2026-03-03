@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "docker build . -t daily-paper && docker create --name daily-paper daily-paper"
   },
   "author": "",
   "license": "ISC",
