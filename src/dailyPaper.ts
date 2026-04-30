@@ -5,23 +5,37 @@ import { Formatter } from "./Formatter";
 
 dotenv.config();
 
-const FRESHRSS_URL = process.env.FRESHRSS_URL || "";
-const API_PASSWORD = process.env.API_PASSWORD || "";
-const API_USER = process.env.API_USER || "";
-const CATEGORY_IDS = (process.env.CATEGORY_IDS || "").split(",").map(cat => Number.parseInt(cat));
-const FETCH_DAYS = parseInt(process.env.FETCH_DAYS || "1");
+let missing = false;
+function getEnvVariable(name: string) {
+  if (name in process.env) {
+    return process.env[name];
+  }
+  console.error(`Missing env variable '${name}'`);
+  missing = true;
+}
 
-const SMTP_SERVER = process.env.SMTP_SERVER || "";
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587");
-const SMTP_USERNAME = process.env.SMTP_USERNAME || "";
-const SMTP_PASSWORD = process.env.SMTP_PASSWORD || "";
-const TO_EMAIL = process.env.TO_EMAIL || "";
-const FROM_EMAIL = process.env.FROM_EMAIL || "";
+const FRESHRSS_URL = getEnvVariable("FRESHRSS_URL") || "";
+const API_PASSWORD = getEnvVariable("API_PASSWORD") || "";
+const API_USER = getEnvVariable("API_USER") || "";
+const CATEGORY_IDS = (getEnvVariable("CATEGORY_IDS") || "").split(",").map(cat => Number.parseInt(cat));
+const FETCH_DAYS = parseInt(getEnvVariable("FETCH_DAYS") || "1");
+
+const SMTP_SERVER = getEnvVariable("SMTP_SERVER") || "";
+const SMTP_PORT = parseInt(getEnvVariable("SMTP_PORT") || "587");
+const SMTP_USERNAME = getEnvVariable("SMTP_USERNAME") || "";
+const SMTP_PASSWORD = getEnvVariable("SMTP_PASSWORD") || "";
+const TO_EMAIL = getEnvVariable("TO_EMAIL") || "";
+const FROM_EMAIL = getEnvVariable("FROM_EMAIL") || "";
+
+if (missing) {
+  process.exit(1);
+}
 
 // Run the script
 runAsync().catch((error) => {
   console.error("An error occurred:", error);
 });
+
 
 async function sendEmail(subject: string, content: string): Promise<void> {
   const transporter = nodemailer.createTransport({
